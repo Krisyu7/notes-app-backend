@@ -1,0 +1,13 @@
+# Google Gemini API
+gemini.api.key=YOUR_GEMINI_API_KEY_HERE
+
+# DataBase
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# JPA
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+spring.h2.console.enabled=true

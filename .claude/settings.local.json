@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn clean:*)",
+      "Bash(mvn test:*)",
+      "Bash(curl:*)",
+      "Bash(jps:*)",
+      "Bash(mvn:*)",
+      "Bash(taskkill:*)"
+    ],
+    "deny": []
+  }
+}

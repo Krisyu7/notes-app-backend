@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 Smart Notes - 智能笔记管理</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- External Dependencies -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body>
+<div class="animated-bg"></div>
+
+<div class="container">
+    <!-- Header Section -->
+    <header class="header">
+        <h1><i class="fas fa-brain"></i> Smart Notes</h1>
+        <p>智能笔记管理系统 - 让学习更高效</p>
+    </header>
+
+    <!-- Toolbar Section -->
+    <div class="toolbar">
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="🔍 搜索笔记、标签或内容..." id="searchInput">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+        <div class="toolbar-buttons">
+            <button class="btn btn-primary" onclick="UI.openModal()">
+                <i class="fas fa-plus"></i> 新建笔记
+            </button>
+            <button class="btn btn-outline theme-toggle" onclick="UI.toggleTheme()">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-bar">
+        <div class="stat-card" id="totalNotesCard">
+            <div class="stat-number" id="totalNotes">0</div>
+            <div class="stat-label">总笔记数</div>
+        </div>
+        <div class="stat-card" id="totalSubjectsCard">
+            <div class="stat-number" id="totalSubjects">0</div>
+            <div class="stat-label">学科数量</div>
+        </div>
+        <div class="stat-card" id="totalFavoritesCard">
+            <div class="stat-number" id="totalFavorites">0</div>
+            <div class="stat-label">收藏笔记</div>
+        </div>
+        <div class="stat-card" id="totalTagsCard">
+            <div class="stat-number" id="totalTags">0</div>
+            <div class="stat-label">标签数量</div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters" id="filters">
+        <div class="filter-chip active" data-filter="all">
+            <i class="fas fa-list"></i> 全部
+        </div>
+        <div class="filter-chip" data-filter="favorites">
+            <i class="fas fa-heart"></i> 收藏
+        </div>
+        <!-- Subject filters will be dynamically added here -->
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner"></div>
+        加载中...
+    </div>
+
+    <!-- Notes Grid -->
+    <div class="notes-grid" id="notesGrid"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">📝</div>
+        <h3>还没有笔记</h3>
+        <p>点击"新建笔记"开始记录你的想法吧！</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="subjectModal">
+    <div class="modal-content">
+        <h2>📚 选择学科</h2>
+        <div id="subjectList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;"></div>
+        <button class="btn btn-outline" onclick="UI.closeSubjectModal()">
+            <i class="fas fa-times"></i> 关闭
+        </button>
+    </div>
+</div>
+
+<div class="modal" id="tagModal">
+    <div class="modal-content">
+        <h2>🏷️ 选择标签</h2>
+        <div id="tagList" style="display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0;"></div>
+        <button class="btn btn-outline" onclick="UI.closeTagModal()">
+            <i class="fas fa-times"></i> 关闭
+        </button>
+    </div>
+</div>
+
+<div class="modal" id="displayModal">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <span id="displaySubject" style="background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; padding: 8px 20px; border-radius: 25px; font-size: 14px; font-weight: 600;"></span>
+                </div>
+                <h1 id="displayTitle" style="font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.2;"></h1>
+            </div>
+            <button onclick="UI.closeDisplayModal()" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; padding: 10px; border-radius: 50%; transition: all 0.3s ease;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="displayTags" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px;"></div>
+
+        <div id="displayContent" style="font-size: 1.1rem; line-height: 1.8; color: var(--text-primary); background: var(--bg-secondary); padding: 30px; border-radius: 20px; white-space: pre-wrap; font-family: 'Consolas', 'Monaco', monospace; border: 1px solid var(--border); pointer-events: none; user-select: text;"></div>
+
+        <!-- AI Tools Section will be dynamically inserted here -->
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <div id="displayDates" style="color: var(--text-secondary); font-size: 14px;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button id="displayEditBtn" class="btn btn-primary" style="padding: 10px 20px;">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button id="displayFavoriteBtn" class="btn btn-outline" style="padding: 10px 20px;">
+                    <i class="fas fa-heart"></i> <span id="favoriteText">收藏</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="noteModal">
+    <div class="modal-content">
+        <h2 id="modalTitle">✨ 新建笔记</h2>
+        <form id="noteForm">
+            <div class="form-group">
+                <label class="form-label">📚 学科</label>
+                <select class="form-select" id="noteSubject" required>
+                    <option value="">选择学科</option>
+                    <option value="Java">Java</option>
+                    <option value="Python">Python</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="React">React</option>
+                    <option value="Spring Boot">Spring Boot</option>
+                    <option value="数据库">数据库</option>
+                    <option value="算法">算法</option>
+                    <option value="系统设计">系统设计</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📝 标题</label>
+                <input type="text" class="form-input" id="noteTitle" required maxlength="200">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🏷️ 标签</label>
+                <div class="tags-input" id="tagsInput">
+                    <input type="text" class="tag-input" placeholder="输入标签后按Enter">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📄 内容</label>
+                <textarea class="form-textarea" id="noteContent" required maxlength="10000" rows="8"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                <button type="button" class="btn btn-outline" onclick="UI.closeModal()">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="scripts/config.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ai.js"></script>
+<script src="scripts/ui.js"></script>
+<script src="scripts/app.js"></script>
+</body>
+</html>

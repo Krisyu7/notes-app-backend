@@ -1,0 +1,84 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### 敏感信息保护 (重要!) ###
+#========API======
+src/main/resources/application.properties
+src/main/resources/application-*.properties
+
+# env
+.env
+.env.local
+.env.production
+
+# Log
+logs/
+*.log
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Linux ###
+*~
+
+### temp ###
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+### back up ###
+*.bak
+*.backup
+
+### 包文件 ###
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+
+node_modules/
+
+
+*.class
