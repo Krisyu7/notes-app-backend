@@ -17,7 +17,8 @@ A modern note management application with integrated AI assistant functionality 
 ### Backend
 - **Spring Boot 3.1.0** - Main framework
 - **Spring Data JPA** - Data persistence
-- **H2 Database** - In-memory database
+- **MySQL** - Relational database
+- **Spring Security + JWT** - Authentication and authorization
 - **Google Gemini API** - AI conversation functionality
 
 ### Frontend
@@ -31,32 +32,51 @@ A modern note management application with integrated AI assistant functionality 
 
 - Java 17+
 - Maven 3.6+
+- MySQL 8.0+
 - Google Gemini API Key
 
 ### 1. Clone the Project
 
 ```bash
-git clone https://github.com/yourusername/smart-notes.git
-cd smart-notes
+git clone https://github.com/Krisyu7/notes-app-backend.git
+cd notes-app-backend
 ```
 
-### 2. Configure Backend
+### 2. Setup Database
 
+Create a MySQL database:
+```sql
+CREATE DATABASE notes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 3. Configure Environment Variables
+
+Copy the example environment file:
 ```bash
-cd backend
+cp .env.example .env
 ```
 
-Copy configuration template:
-```bash
-cp application.properties.template application.properties
-```
-
-Edit `application.properties` and add your API key:
+Edit `.env` and configure your settings:
 ```properties
-gemini.api.key=YOUR_GEMINI_API_KEY
+# Database Configuration
+DB_URL=jdbc:mysql://localhost:3306/notes_db?useSSL=false&serverTimezone=UTC&characterEncoding=utf8&allowPublicKeyRetrieval=true
+DB_USERNAME=your_database_username
+DB_PASSWORD=your_database_password
+
+# Google Gemini API Configuration
+GEMINI_API_KEY=your_google_gemini_api_key_here
+
+# JWT Configuration - Use a strong, unique secret key
+JWT_SECRET=your_very_secure_jwt_secret_key_at_least_256_bits_long
+JWT_EXPIRATION=86400000
+
+# Server Configuration
+SERVER_PORT=8080
 ```
 
-### 3. Start Backend Service
+**⚠️ Security Notice**: Never commit your `.env` file to version control!
+
+### 4. Start Backend Service
 
 ```bash
 mvn spring-boot:run
@@ -64,67 +84,65 @@ mvn spring-boot:run
 
 Backend service will start at `http://localhost:8080`
 
-### 4. Start Frontend
-
-Open `frontend/index.html` directly in browser, or use a local server:
-
-```bash
-cd frontend
-# If you have Python
-python -m http.server 3000
-
-# Or using Node.js
-npx serve .
-```
-
 ### 5. Access Application
 
-Open browser and visit:
-- Frontend: `http://localhost:3000` (if using local server)
 - Backend API: `http://localhost:8080/api`
+- API Documentation: `http://localhost:8080/swagger-ui.html` (if enabled)
+- Test endpoints using tools like Postman or curl
 
-## Usage Guide
+For the complete application with frontend, see: [notes-app](https://github.com/Krisyu7/notes-app)
 
-### Basic Operations
-1. **Create Note** - Click "New Note" button
-2. **View Note** - Click on note card to view details
-3. **Edit Note** - Click "Edit" button in note detail page
-4. **Search Notes** - Use search box at the top
-5. **Filter Notes** - Click filter chips
+## API Documentation
 
-### AI Assistant
-1. Open any note detail page
-2. Enter your question in the AI assistant area
-3. Click "Ask" button to get AI response
+### Authentication Endpoints
 
-### Keyboard Shortcuts
-- `Ctrl/Cmd + N` - New note
-- `Ctrl/Cmd + /` - Focus search
-- `Ctrl/Cmd + T` - Toggle theme
-- `ESC` - Close modal
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | User login |
+| GET | `/api/auth/profile` | Get user profile (requires JWT) |
+
+### Note Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/notes` | Get all notes | Yes |
+| POST | `/api/notes` | Create note | Yes |
+| GET | `/api/notes/{id}` | Get single note | Yes |
+| PUT | `/api/notes/{id}` | Update note | Yes |
+| DELETE | `/api/notes/{id}` | Delete note | Yes |
+| PUT | `/api/notes/{id}/favorite` | Toggle favorite status | Yes |
+| GET | `/api/notes/search` | Search notes | Yes |
+| GET | `/api/notes/subjects` | Get subjects list | Yes |
+| GET | `/api/notes/tags` | Get tags list | Yes |
+
+### AI Assistant Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/ai/chat` | AI chat | Yes |
 
 ## Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `gemini.api.key` | Google Gemini API key | Required |
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DB_URL` | MySQL database connection URL | Yes | - |
+| `DB_USERNAME` | Database username | Yes | - |
+| `DB_PASSWORD` | Database password | Yes | - |
+| `GEMINI_API_KEY` | Google Gemini API key | Yes | - |
+| `JWT_SECRET` | JWT signing secret (min 256 bits) | Yes | - |
+| `JWT_EXPIRATION` | JWT token expiration (milliseconds) | No | 86400000 (24h) |
+| `SERVER_PORT` | Server port | No | 8080 |
 
-### API Endpoints
+### Security Best Practices
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/notes` | Get notes list |
-| POST | `/api/notes` | Create note |
-| GET | `/api/notes/{id}` | Get single note |
-| PUT | `/api/notes/{id}` | Update note |
-| DELETE | `/api/notes/{id}` | Delete note |
-| PUT | `/api/notes/{id}/favorite` | Toggle favorite status |
-| GET | `/api/notes/search` | Search notes |
-| GET | `/api/notes/subjects` | Get subjects list |
-| GET | `/api/notes/tags` | Get tags list |
-| POST | `/api/ai/chat` | AI chat |
+1. **Never commit `.env` file** - Use `.env.example` as template
+2. **Use strong JWT secret** - Minimum 256 bits, randomly generated
+3. **Change default credentials** - Update all default passwords
+4. **Enable HTTPS in production** - Use SSL/TLS certificates
+5. **Regular security updates** - Keep dependencies up to date
 
 ## Contributing
 
