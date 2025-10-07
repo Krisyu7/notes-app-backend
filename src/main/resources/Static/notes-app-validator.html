@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App - API Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .auth-section {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .note-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .note-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .note-subject {
+            font-size: 14px;
+            color: #666;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .note-content {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .note-meta {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .tags {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .tag {
+            background-color: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .user-info {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- API配置 -->
+    <div class="container">
+        <h2>API Configuration</h2>
+        <div class="form-group">
+            <label for="apiBase">API Base URL:</label>
+            <input type="text" id="apiBase" value="http://localhost:8080">
+        </div>
+    </div>
+
+    <!-- 认证部分 -->
+    <div class="container">
+        <div class="auth-section">
+            <h2>Authentication</h2>
+            
+            <div id="loginForm">
+                <h3>Login</h3>
+                <div class="form-group">
+                    <label for="usernameOrEmail">Username or Email:</label>
+                    <input type="text" id="usernameOrEmail" placeholder="Enter username or email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                <button onclick="login()">Login</button>
+                <button onclick="showRegisterForm()">Register</button>
+                <button onclick="testAuthAPI()">Test Auth API</button>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <h3>Register</h3>
+                <div class="form-group">
+                    <label for="regUsername">Username:</label>
+                    <input type="text" id="regUsername" placeholder="Enter username (3-50 chars)">
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email:</label>
+                    <input type="email" id="regEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password:</label>
+                    <input type="password" id="regPassword" placeholder="Enter password (min 6 chars)">
+                </div>
+                <button onclick="register()">Register</button>
+                <button onclick="showLoginForm()">Back to Login</button>
+            </div>
+
+            <div id="userInfo" class="user-info hidden">
+                <h3>Logged in as: <span id="currentUser"></span></h3>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="messageArea"></div>
+    </div>
+
+    <!-- 笔记统计 -->
+    <div id="statsSection" class="container hidden">
+        <h2>Your Notes Statistics</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalNotes">0</div>
+                <div class="stat-label">Total Notes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubjects">0</div>
+                <div class="stat-label">Subjects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCategories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="favoriteNotes">0</div>
+                <div class="stat-label">Favorites</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加笔记 -->
+    <div id="addNoteSection" class="container hidden">
+        <h2>Add New Note</h2>
+        <div class="form-group">
+            <label for="noteSubject">Subject:</label>
+            <input type="text" id="noteSubject" placeholder="Enter subject (max 100 chars)" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label for="noteTitle">Title:</label>
+            <input type="text" id="noteTitle" placeholder="Enter title (max 200 chars)" maxlength="200">
+        </div>
+        <div class="form-group">
+            <label for="noteContent">Content:</label>
+            <textarea id="noteContent" rows="6" placeholder="Enter note content (max 10000 chars)" maxlength="10000"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="noteCategory">Category:</label>
+            <input type="text" id="noteCategory" placeholder="Enter category (max 50 chars)" maxlength="50">
+        </div>
+        <div class="form-group">
+            <label for="noteTags">Tags (comma separated):</label>
+            <input type="text" id="noteTags" placeholder="tag1, tag2, tag3">
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="isFavorite"> Mark as Favorite
+            </label>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="isPublic"> Make Public
+            </label>
+        </div>
+        <button onclick="addNote()">Add Note</button>
+        <button onclick="clearNoteForm()">Clear</button>
+    </div>
+
+    <!-- 笔记列表 -->
+    <div id="notesSection" class="container hidden">
+        <h2>Your Notes</h2>
+        <div style="margin-bottom: 20px;">
+            <button onclick="loadNotes()">Refresh Notes</button>
+            <button onclick="loadStats()">Refresh Stats</button>
+            <button onclick="testNotesAPI()">Test Notes API</button>
+        </div>
+        
+        <div id="searchSection" style="margin-bottom: 20px;">
+            <input type="text" id="searchKeyword" placeholder="Search keyword..." style="width: 200px;">
+            <input type="text" id="searchSubject" placeholder="Filter by subject..." style="width: 150px;">
+            <input type="text" id="searchCategory" placeholder="Filter by category..." style="width: 150px;">
+            <button onclick="searchNotes()">Search</button>
+            <button onclick="clearSearch()">Clear</button>
+        </div>
+
+        <div id="notesContainer">
+            <div class="loading">Loading notes...</div>
+        </div>
+        
+        <div id="pagination" style="text-align: center; margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const API_CONFIG = {
+            baseURL: 'http://localhost:8080',
+            userId: null,
+            currentPage: 0,
+            pageSize: 10
+        };
+
+        // 更新API基础URL
+        function updateApiBase() {
+            API_CONFIG.baseURL = document.getElementById('apiBase').value;
+        }
+
+        document.getElementById('apiBase').addEventListener('change', updateApiBase);
+
+        // 工具函数
+        function showMessage(message, isError = false) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+            setTimeout(() => messageArea.innerHTML = '', 5000);
+        }
+
+        function makeRequest(endpoint, options = {}) {
+            const url = `${API_CONFIG.baseURL}${endpoint}`;
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(API_CONFIG.userId && { 'User-Id': API_CONFIG.userId })
+                }
+            };
+            
+            return fetch(url, { ...defaultOptions, ...options })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || `HTTP ${response.status}`);
+                        });
+                    }
+                    return response.text().then(text => {
+                        return text ? JSON.parse(text) : {};
+                    });
+                });
+        }
+
+        // 认证功能
+        async function login() {
+            const usernameOrEmail = document.getElementById('usernameOrEmail').value;
+            const password = document.getElementById('password').value;
+
+            if (!usernameOrEmail || !password) {
+                showMessage('Please enter username/email and password', true);
+                return;
+            }
+
+            try {
+                const response = await makeRequest('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ usernameOrEmail, password })
+                });
+
+                API_CONFIG.userId = response.token;
+                document.getElementById('currentUser').textContent = response.username;
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('addNoteSection').classList.remove('hidden');
+                document.getElementById('notesSection').classList.remove('hidden');
+                document.getElementById('statsSection').classList.remove('hidden');
+
+                showMessage(`Welcome back, ${response.username}!`);
+                loadNotes();
+                loadStats();
+            } catch (error) {
+                showMessage(`Login failed: ${error.message}`, true);
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!username || !email || !password) {
+                showMessage('Please fill in all fields', true);
+                return;
+            }
+
+            try {
+                const response = await makeRequest('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                showMessage(`Registration successful! Welcome, ${response.username}!`);
+                
+                // 自动登录
+                API_CONFIG.userId = response.token;
+                document.getElementById('currentUser').textContent = response.username;
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('addNoteSection').classList.remove('hidden');
+                document.getElementById('notesSection').classList.remove('hidden');
+                document.getElementById('statsSection').classList.remove('hidden');
+
+                loadNotes();
+                loadStats();
+            } catch (error) {
+                showMessage(`Registration failed: ${error.message}`, true);
+            }
+        }
+
+        function logout() {
+            API_CONFIG.userId = null;
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('addNoteSection').classList.add('hidden');
+            document.getElementById('notesSection').classList.add('hidden');
+            document.getElementById('statsSection').classList.add('hidden');
+            
+            // 清空表单
+            document.getElementById('usernameOrEmail').value = '';
+            document.getElementById('password').value = '';
+            clearNoteForm();
+            
+            showMessage('Logged out successfully');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        function showLoginForm() {
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        // 测试API连接
+        async function testAuthAPI() {
+            try {
+                const response = await makeRequest('/api/auth/test');
+                showMessage(`Auth API is working! Server time: ${new Date().toLocaleString()}`);
+            } catch (error) {
+                showMessage(`Auth API test failed: ${error.message}`, true);
+            }
+        }
+
+        async function testNotesAPI() {
+            try {
+                const response = await makeRequest('/api/notes/test');
+                showMessage(`Notes API is working! Server time: ${new Date().toLocaleString()}`);
+            } catch (error) {
+                showMessage(`Notes API test failed: ${error.message}`, true);
+            }
+        }
+
+        // 笔记功能
+        async function addNote() {
+            const subject = document.getElementById('noteSubject').value;
+            const title = document.getElementById('noteTitle').value;
+            const content = document.getElementById('noteContent').value;
+            const category = document.getElementById('noteCategory').value;
+            const tagsText = document.getElementById('noteTags').value;
+            const isFavorite = document.getElementById('isFavorite').checked;
+            const isPublic = document.getElementById('isPublic').checked;
+
+            if (!subject || !title || !content) {
+                showMessage('Subject, title, and content are required', true);
+                return;
+            }
+
+            const tags = tagsText ? tagsText.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
+            try {
+                await makeRequest('/api/notes', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        subject,
+                        title,
+                        content,
+                        category,
+                        tags,
+                        isFavorite,
+                        isPublic
+                    })
+                });
+
+                showMessage('Note added successfully!');
+                clearNoteForm();
+                loadNotes();
+                loadStats();
+            } catch (error) {
+                showMessage(`Failed to add note: ${error.message}`, true);
+            }
+        }
+
+        function clearNoteForm() {
+            document.getElementById('noteSubject').value = '';
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteCategory').value = '';
+            document.getElementById('noteTags').value = '';
+            document.getElementById('isFavorite').checked = false;
+            document.getElementById('isPublic').checked = false;
+        }
+
+        async function loadNotes(page = 0) {
+            API_CONFIG.currentPage = page;
+            
+            try {
+                const response = await makeRequest(`/api/notes?page=${page}&size=${API_CONFIG.pageSize}&sortBy=updatedAt&sortDir=desc`);
+                displayNotes(response);
+            } catch (error) {
+                showMessage(`Failed to load notes: ${error.message}`, true);
+            }
+        }
+
+        async function searchNotes() {
+            const keyword = document.getElementById('searchKeyword').value;
+            const subject = document.getElementById('searchSubject').value;
+            const category = document.getElementById('searchCategory').value;
+
+            let searchParams = new URLSearchParams({
+                page: '0',
+                size: API_CONFIG.pageSize.toString()
+            });
+
+            if (keyword) searchParams.append('keyword', keyword);
+            if (subject) searchParams.append('subject', subject);
+            if (category) searchParams.append('category', category);
+
+            try {
+                const response = await makeRequest(`/api/notes/search?${searchParams}`);
+                displayNotes(response);
+            } catch (error) {
+                showMessage(`Search failed: ${error.message}`, true);
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchSubject').value = '';
+            document.getElementById('searchCategory').value = '';
+            loadNotes(0);
+        }
+
+        function displayNotes(response) {
+            const container = document.getElementById('notesContainer');
+            
+            if (!response.content || response.content.length === 0) {
+                container.innerHTML = '<div class="loading">No notes found</div>';
+                return;
+            }
+
+            let html = '';
+            response.content.forEach(note => {
+                const tags = note.tags && note.tags.length > 0 
+                    ? `<div class="tags">${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>`
+                    : '';
+                
+                html += `
+                    <div class="note-item">
+                        <div class="note-header">
+                            <div class="note-title">${note.title}</div>
+                            <div class="note-subject">${note.subject}</div>
+                        </div>
+                        <div class="note-content">${note.content}</div>
+                        ${tags}
+                        <div class="note-meta">
+                            <div>
+                                Category: ${note.category || 'None'} | 
+                                ${note.isFavorite ? '⭐ Favorite' : ''} | 
+                                ${note.isPublic ? '🌐 Public' : '🔒 Private'}
+                            </div>
+                            <div>
+                                Created: ${new Date(note.createdAt).toLocaleDateString()} | 
+                                Updated: ${new Date(note.updatedAt).toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // 分页控件
+            const pagination = document.getElementById('pagination');
+            let paginationHtml = '';
+            
+            if (response.totalPages > 1) {
+                if (response.pageable.pageNumber > 0) {
+                    paginationHtml += `<button onclick="loadNotes(${response.pageable.pageNumber - 1})">Previous</button>`;
+                }
+                
+                paginationHtml += ` Page ${response.pageable.pageNumber + 1} of ${response.totalPages} (${response.totalElements} total) `;
+                
+                if (response.pageable.pageNumber < response.totalPages - 1) {
+                    paginationHtml += `<button onclick="loadNotes(${response.pageable.pageNumber + 1})">Next</button>`;
+                }
+            }
+            
+            pagination.innerHTML = paginationHtml;
+        }
+
+        async function loadStats() {
+            try {
+                const [stats, subjects, categories] = await Promise.all([
+                    makeRequest('/api/notes/stats'),
+                    makeRequest('/api/notes/subjects'),
+                    makeRequest('/api/notes/categories')
+                ]);
+
+                // 更新统计信息（假设stats返回包含总数信息）
+                document.getElementById('totalNotes').textContent = stats.totalNotes || '0';
+                document.getElementById('totalSubjects').textContent = subjects.length || '0';
+                document.getElementById('totalCategories').textContent = categories.length || '0';
+                document.getElementById('favoriteNotes').textContent = stats.favoriteCount || '0';
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 测试API连接
+            testAuthAPI();
+        });
+    </script>
+</body>
+</html>

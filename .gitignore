@@ -5,14 +5,29 @@ target/
 !**/src/test/**/target/
 
 ### 敏感信息保护 (重要!) ###
-#========API======
-src/main/resources/application.properties
-src/main/resources/application-*.properties
-
-# env
+# Environment variables with sensitive data
 .env
 .env.local
 .env.production
+.env.development
+.env.test
+*.env
+
+# Application properties with sensitive data (if needed)
+# src/main/resources/application.properties
+src/main/resources/application-*.properties
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# SSL certificates and keys
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
 
 # Log
 logs/

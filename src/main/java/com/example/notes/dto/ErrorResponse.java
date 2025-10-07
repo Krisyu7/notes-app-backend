@@ -35,6 +35,23 @@ public class ErrorResponse {
         return new ErrorResponse("Internal Server Error", message, LocalDateTime.now(), null);
     }
 
+    // 新增的静态方法
+    public static ErrorResponse unauthorized(String message) {
+        return new ErrorResponse("Unauthorized", message, LocalDateTime.now(), null);
+    }
+
+    public static ErrorResponse conflict(String message) {
+        return new ErrorResponse("Conflict", message, LocalDateTime.now(), null);
+    }
+
+    public static ErrorResponse badRequest(String message) {
+        return new ErrorResponse("Bad Request", message, LocalDateTime.now(), null);
+    }
+
+    public static ErrorResponse forbidden(String message) {
+        return new ErrorResponse("Forbidden", message, LocalDateTime.now(), null);
+    }
+
     // Getters and setters
     public String getError() { return error; }
     public void setError(String error) { this.error = error; }

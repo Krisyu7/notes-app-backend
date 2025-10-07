@@ -40,7 +40,8 @@ const SUBJECTS = {
         '数据库',
         '算法',
         '系统设计',
-        '其他'
+        '其他',
+        "Html/CSS"
     ],
 
     // 学科图标映射
@@ -53,6 +54,7 @@ const SUBJECTS = {
         '数据库': 'fas fa-database',
         '算法': 'fas fa-code',
         '系统设计': 'fas fa-sitemap',
+        'Html/CSS': 'fas fa-Html/CSS',
         '其他': 'fas fa-folder'
     }
 };

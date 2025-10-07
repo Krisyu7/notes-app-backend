@@ -2,6 +2,7 @@ package com.example.notes.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.HashSet;
@@ -9,6 +10,8 @@ import java.util.HashSet;
 @Entity
 @Table(name = "notes")
 public class Note {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,22 +36,44 @@ public class Note {
     @Column(name = "tag")
     private Set<String> tags = new HashSet<>();
 
-
     @Column(name = "is_favorite", nullable = false)
     private Boolean isFavorite = false;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // 用户关联
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
+
+    // 新增：可选的分类字段
+    @Size(max = 50, message = "Category must not exceed 50 characters")
+    @Column(length = 50)
+    private String category;
+
+    // 新增：是否为公开笔记（后续功能扩展用）
+    @Column(name = "is_public", nullable = false)
+    private Boolean isPublic = false;
 
     public Note() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
+    public Note(String subject, String title, String content, User user) {
+        this();
+        this.subject = subject;
+        this.title = title;
+        this.content = content;
+        this.user = user;
+    }
+
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -64,7 +89,6 @@ public class Note {
     public Set<String> getTags() { return tags; }
     public void setTags(Set<String> tags) { this.tags = tags; }
 
-
     public Boolean getIsFavorite() { return isFavorite; }
     public void setIsFavorite(Boolean isFavorite) { this.isFavorite = isFavorite; }
 
@@ -74,8 +98,22 @@ public class Note {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public Boolean getIsPublic() { return isPublic; }
+    public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
+
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // 便捷方法：获取用户ID（避免懒加载问题）
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
     }
 }

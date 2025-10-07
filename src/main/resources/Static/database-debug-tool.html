@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .note-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .note-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .note-subject {
+            font-size: 14px;
+            color: #666;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .note-content {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .note-meta {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .user-id-badge {
+            background-color: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .no-user-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Database Debug Tool</h1>
+        <p>这个工具用来查看和调试数据库中的笔记数据，特别是没有user_id的旧笔记。</p>
+        
+        <button onclick="checkAllUsers()">查看所有用户</button>
+        <button onclick="checkAllNotes()">查看所有笔记（包括旧笔记）</button>
+        <button onclick="checkOrphanNotes()">查看没有用户ID的笔记</button>
+        <button onclick="generateSQLCommands()">生成修复SQL命令</button>
+        
+        <div id="messageArea"></div>
+    </div>
+
+    <div id="resultArea"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        function showMessage(message, isError = false) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+
+        function displayResults(title, data) {
+            const resultArea = document.getElementById('resultArea');
+            const container = document.createElement('div');
+            container.className = 'container';
+            container.innerHTML = `
+                <h2>${title}</h2>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            resultArea.appendChild(container);
+        }
+
+        function displayNotes(title, notes, showUserInfo = false) {
+            const resultArea = document.getElementById('resultArea');
+            const container = document.createElement('div');
+            container.className = 'container';
+            
+            let html = `<h2>${title}</h2>`;
+            
+            if (!notes || notes.length === 0) {
+                html += '<p>没有找到笔记</p>';
+            } else {
+                notes.forEach(note => {
+                    const userBadge = note.user_id || note.userId 
+                        ? `<span class="user-id-badge">User ID: ${note.user_id || note.userId}</span>`
+                        : `<span class="no-user-badge">无用户ID</span>`;
+                    
+                    html += `
+                        <div class="note-item">
+                            <div class="note-header">
+                                <div class="note-title">${note.title || '无标题'}</div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <div class="note-subject">${note.subject || '无主题'}</div>
+                                    ${showUserInfo ? userBadge : ''}
+                                </div>
+                            </div>
+                            <div class="note-content">${(note.content || '无内容').substring(0, 200)}${note.content && note.content.length > 200 ? '...' : ''}</div>
+                            <div class="note-meta">
+                                <div>ID: ${note.id} | Category: ${note.category || 'None'}</div>
+                                <div>Created: ${note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '未知'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+            resultArea.appendChild(container);
+        }
+
+        // 这些是直接的数据库查询API调用，可能需要后端支持
+        async function checkAllUsers() {
+            try {
+                showMessage('正在获取所有用户...');
+                
+                // 尝试通过认证API获取
+                const response = await fetch(`${API_BASE}/api/auth/users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    displayResults('所有用户', users);
+                    showMessage(`找到 ${users.length} 个用户`);
+                } else {
+                    throw new Error('API endpoint不存在');
+                }
+            } catch (error) {
+                showMessage(`无法获取用户列表: ${error.message}. 请使用数据库直接查询：SELECT * FROM users;`, true);
+                
+                // 显示SQL查询建议
+                displayResults('建议的SQL查询', {
+                    query: "SELECT * FROM users;",
+                    description: "在MySQL中运行这个查询来查看所有用户"
+                });
+            }
+        }
+
+        async function checkAllNotes() {
+            try {
+                showMessage('尝试获取所有笔记（包括没有用户ID的）...');
+                
+                // 尝试不同的方式获取笔记
+                const methods = [
+                    { url: '/api/notes/all', desc: '获取所有笔记' },
+                    { url: '/api/notes/public', desc: '获取公开笔记' },
+                    { url: '/api/notes?page=0&size=100', desc: '分页获取笔记', headers: {'User-Id': '1'} }
+                ];
+                
+                for (let method of methods) {
+                    try {
+                        const response = await fetch(`${API_BASE}${method.url}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(method.headers || {})
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const notes = data.content || data; // 处理分页响应
+                            displayNotes(`所有笔记 (${method.desc})`, Array.isArray(notes) ? notes : [notes], true);
+                            showMessage(`通过 ${method.desc} 找到笔记`);
+                            return;
+                        }
+                    } catch (e) {
+                        console.log(`方法失败: ${method.desc}`, e);
+                    }
+                }
+                
+                throw new Error('所有API方法都失败了');
+                
+            } catch (error) {
+                showMessage(`无法通过API获取笔记: ${error.message}`, true);
+                displayResults('建议的SQL查询', {
+                    query: "SELECT id, subject, title, LEFT(content, 100) as content_preview, user_id, created_at FROM notes ORDER BY created_at DESC;",
+                    description: "在MySQL中运行这个查询来查看所有笔记"
+                });
+            }
+        }
+
+        async function checkOrphanNotes() {
+            showMessage('建议直接使用SQL查询检查没有用户ID的笔记', true);
+            displayResults('检查孤立笔记的SQL命令', {
+                queries: [
+                    {
+                        query: "SELECT COUNT(*) as orphan_count FROM notes WHERE user_id IS NULL;",
+                        description: "统计没有用户ID的笔记数量"
+                    },
+                    {
+                        query: "SELECT id, subject, title, LEFT(content, 50) as preview FROM notes WHERE user_id IS NULL LIMIT 10;",
+                        description: "查看前10条没有用户ID的笔记"
+                    }
+                ]
+            });
+        }
+
+        function generateSQLCommands() {
+            const commands = {
+                title: "修复数据库的SQL命令",
+                steps: [
+                    {
+                        step: 1,
+                        description: "首先查看现有用户",
+                        sql: "SELECT id, username, email FROM users;"
+                    },
+                    {
+                        step: 2,
+                        description: "查看有多少孤立笔记",
+                        sql: "SELECT COUNT(*) as orphan_notes FROM notes WHERE user_id IS NULL;"
+                    },
+                    {
+                        step: 3,
+                        description: "注册一个新用户来承接旧笔记（通过API或SQL）",
+                        api: "POST /api/auth/register",
+                        body: {
+                            username: "legacy_admin",
+                            email: "legacy@example.com", 
+                            password: "123456"
+                        }
+                    },
+                    {
+                        step: 4,
+                        description: "将所有孤立笔记关联到用户ID=1（假设新用户ID是1）",
+                        sql: "UPDATE notes SET user_id = 1 WHERE user_id IS NULL;"
+                    },
+                    {
+                        step: 5,
+                        description: "验证修复结果",
+                        sql: "SELECT COUNT(*) as notes_with_users FROM notes WHERE user_id IS NOT NULL;"
+                    }
+                ]
+            };
+            
+            displayResults('数据修复步骤', commands);
+            showMessage('已生成修复命令，按步骤执行即可恢复旧笔记访问');
+        }
+
+        // 页面加载时的说明
+        document.addEventListener('DOMContentLoaded', function() {
+            showMessage('点击按钮开始调试数据库。如果API调用失败，会显示对应的SQL查询命令。');
+        });
+    </script>
+</body>
+</html>
