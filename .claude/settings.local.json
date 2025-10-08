@@ -6,7 +6,9 @@
       "Bash(curl:*)",
       "Bash(jps:*)",
       "Bash(mvn:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Read(//e/IdeaProjects/noteapp/notes-app-frontend/**)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }
